@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRUSTLAYER AI · Live demo</title>
+<style>
+  :root { --bg:#0a1628; --panel:#0f2038; --line:#1b3856; --text:#f4f7fb; --muted:#afc1d4; --dim:#6f839c; --cyan:#40d7e8; --green:#51d6a5; --amber:#ffbe5c; --red:#ff6b7a; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 -apple-system,"Segoe UI",Inter,sans-serif; }
+  header { display:flex; align-items:center; gap:18px; padding:16px 28px; border-bottom:1px solid var(--line); }
+  .logo { font-weight:800; letter-spacing:2px; font-size:18px; } .logo b { color:var(--cyan); }
+  .tag { color:var(--muted); } .grow { flex:1; }
+  .pill { font-size:12px; padding:3px 10px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+  button { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button:hover { border-color:var(--cyan); } button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--cyan); color:#05202a; border-color:var(--cyan); font-weight:700; }
+  button.good { background:#0f3a30; border-color:var(--green); color:var(--green); } button.bad { background:#3a1620; border-color:var(--red); color:var(--red); }
+  main { padding:20px 28px 60px; display:flex; flex-direction:column; gap:18px; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 18px; }
+  .step.active { border-color:var(--cyan); } .step .n { color:var(--cyan); font-weight:800; font-size:13px; letter-spacing:2px; }
+  .step h3 { margin:2px 0 4px; font-size:19px; } .step p { margin:0 0 10px; color:var(--muted); font-size:14px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .bar input, .bar select { flex:1; min-width:260px; background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:8px 12px; font:inherit; }
+  .stages { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .stage { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; opacity:.25; transition:opacity .3s; min-height:92px; }
+  .stage.on { opacity:1; } .stage b { display:block; margin-bottom:2px; } .stage small { color:var(--muted); display:block; font-size:12.5px; }
+  .stage.ok { border-color:var(--green); } .stage.warn { border-color:var(--amber); } .stage.fail { border-color:var(--red); } .stage.skipped { border-style:dashed; }
+  .cols { display:grid; grid-template-columns:1fr 1.5fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:1150px) { .cols, .stages, .steps { grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .panel h4 { margin:0 0 10px; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--cyan); }
+  .block { border:1px solid var(--line); border-radius:8px; padding:7px 9px; margin-bottom:8px; font-size:13.5px; word-break:break-word; }
+  .block .meta { font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
+  .block.tainted { border-color:var(--red); background:#2a1420; }
+  .badge { display:inline-block; font-size:11px; font-weight:800; letter-spacing:.8px; padding:1px 8px; border-radius:99px; margin-left:6px; }
+  .b-green { background:#0f3a30; color:var(--green); } .b-red { background:#3a1620; color:var(--red); } .b-amber { background:#3a2c10; color:var(--amber); } .b-grey { background:#1b2b40; color:var(--muted); }
+  .field { border-bottom:1px solid var(--line); padding:10px 0; } .field:last-child { border-bottom:0; }
+  .field .top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .field .nm { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; } .field .val { font-weight:700; font-size:17px; }
+  .field .ev { margin-top:4px; color:var(--muted); font-size:13px; border-left:3px solid var(--line); padding-left:8px; }
+  .field .src { color:var(--dim); font-size:11.5px; margin-top:3px; word-break:break-all; }
+  .chips { margin-top:6px; display:flex; gap:5px; flex-wrap:wrap; } .chip { font-size:11.5px; padding:1px 8px; border-radius:6px; }
+  .why { color:var(--red); font-size:13px; margin-top:4px; }
+  .banner { border-radius:12px; padding:12px 14px; font-weight:800; letter-spacing:1px; font-size:20px; margin-bottom:10px; }
+  .banner.approved, .banner.published_after_review { background:#0f3a30; color:var(--green); } .banner.quarantined { background:#3a2c10; color:var(--amber); }
+  .banner.failed, .banner.rejected_by_reviewer { background:#3a1620; color:var(--red); }
+  ul { margin:0 0 10px; padding-left:18px; } li { margin:4px 0; font-size:13.5px; } .sev-high { color:var(--red); } .sev-medium { color:var(--amber); } .sev-info, .sev-low { color:var(--muted); }
+  .audit { max-height:260px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,monospace; }
+  .audit div { padding:2px 0; border-bottom:1px solid #12263f; word-break:break-all; } .audit .h { color:var(--dim); } .audit .e { color:var(--cyan); }
+  .db { font-size:13px; } .db > div { border:1px solid var(--line); border-radius:8px; padding:6px 9px; margin-bottom:6px; }
+  .empty { color:var(--dim); font-size:13px; }
+  #overlay { position:fixed; inset:0; background:rgba(5,12,24,.88); display:none; padding:40px; overflow:auto; z-index:9; }
+  #overlay.show { display:block; } table { width:100%; border-collapse:collapse; font-size:13px; } th, td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--dim); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+  .hint { color:var(--dim); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">TRUST<b>LAYER</b> AI</div>
+  <div class="tag">Trust what AI finds. Verify what AI claims.</div>
+  <div class="grow"></div>
+  <span class="pill">Team-owned test pages · fabricated data</span>
+  <button id="btnPack">Test pack</button>
+  <button id="btnReset">Reset</button>
+</header>
+
+<main>
+  <section class="steps">
+    <div class="step" id="st1"><div class="n">01</div><h3>Normal record</h3><p>Enter a company URL. Field proposals come with source evidence.</p><button class="primary" id="run1">Run normal record</button></div>
+    <div class="step" id="st2"><div class="n">02</div><h3>Controlled poison page</h3><p>Instruction-like payload plus an unsupported revenue claim.</p><button class="primary" id="run2">Run poison page</button></div>
+    <div class="step" id="st3"><div class="n">03</div><h3>Trust decision</h3><p>Injection flag, rejected field, quarantined record, audit trace.</p><span class="hint" id="st3hint">Appears after a run. Keys: 1, 2, R</span></div>
+  </section>
+
+  <section class="bar">
+    <input id="url" placeholder="Company URL (allow-listed domains only)" spellcheck="false">
+    <button id="runUrl">Enrich URL</button>
+    <select id="extra"><option value="">More scenarios…</option></select>
+  </section>
+
+  <section class="stages" id="stages"></section>
+
+  <section class="cols" id="cols" hidden>
+    <div class="panel"><h4>Retrieved content (untrusted data)</h4><div id="blocks"></div></div>
+    <div class="panel"><h4>Field proposals + evidence</h4><div id="fields"></div></div>
+    <div>
+      <div class="panel" style="margin-bottom:16px"><h4>Trust decision</h4><div id="decision"></div></div>
+      <div class="panel"><h4>Trusted database (protected destination)</h4><div class="db" id="db"></div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h4>Audit trace <span id="chain" class="badge b-grey"></span></h4>
+    <div class="audit" id="audit"></div>
+  </section>
+  <div class="hint">Proposer: deterministic rule-based extractor (no LLM). The trust layer decides what may be published; retrieval and extraction only propose.</div>
+</main>
+
+<div id="overlay"><div class="panel"><h4>Test pack <span id="packSummary" class="badge b-grey"></span> <button style="float:right" id="closePack">Close</button></h4><div id="pack">Running…</div></div></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const el = (tag, props = {}, ...kids) => {
+  const n = Object.assign(document.createElement(tag), props);
+  for (const k of kids.flat()) if (k != null) n.append(k);
+  return n;
+};
+const api = async (path, body) => {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+const LABEL = { name: "Company name", industry: "Industry", founded_year: "Founded", headquarters: "Headquarters", employees: "Employees", annual_revenue: "Annual revenue" };
+const CHECK = { evidence: "Evidence", trusted_content: "Trusted content", consistent: "Consistent", plausible: "Plausible", fresh: "Fresh" };
+const STATUS_BADGE = { accepted: ["ACCEPTED", "b-green"], rejected: ["REJECTED", "b-red"], unknown: ["UNKNOWN", "b-grey"] };
+const BANNER = { approved: "APPROVED", quarantined: "QUARANTINED", failed: "FAILED", published_after_review: "PUBLISHED AFTER REVIEW", rejected_by_reviewer: "REJECTED BY REVIEWER" };
+
+let config, current = null, busy = false;
+
+function badge(text, cls) { return el("span", { className: `badge ${cls}`, textContent: text }); }
+
+function renderStages(rec) {
+  const box = $("#stages");
+  box.replaceChildren();
+  const cards = rec.stages.map((s) => {
+    const c = el("div", { className: `stage ${s.state}` }, el("b", { textContent: s.name }), el("small", { textContent: s.summary }));
+    box.append(c);
+    return c;
+  });
+  return new Promise((resolve) => {
+    cards.forEach((c, i) => setTimeout(() => c.classList.add("on"), i * 380));
+    setTimeout(resolve, cards.length * 380 + 150);
+  });
+}
+
+function renderBlocks(rec) {
+  $("#blocks").replaceChildren(
+    ...rec.blocks.map((b) =>
+      el("div", { className: `block${b.tainted ? " tainted" : ""}` },
+        el("div", { className: "meta" }, `${b.id} · ${b.tag}`, b.hidden ? badge("HIDDEN", "b-amber") : null, b.patterns.length ? badge("INJECTION", "b-red") : null),
+        b.text),
+    ),
+  );
+}
+
+function renderFields(rec) {
+  $("#fields").replaceChildren(
+    ...rec.fields.map((f) => {
+      const [txt, cls] = STATUS_BADGE[f.status];
+      const row = el("div", { className: "field" },
+        el("div", { className: "top" }, el("span", { className: "nm", textContent: LABEL[f.name] }), badge(txt, cls)),
+        el("div", { className: "val", textContent: f.value ?? "unknown" }));
+      if (f.evidence) {
+        row.append(el("div", { className: "ev", textContent: `“${f.evidence.excerpt}”` }));
+        row.append(el("div", { className: "src", textContent: `${rec.url} · ${f.evidence.blockId} · retrieved ${rec.retrievedAt}` }));
+      }
+      row.append(el("div", { className: "chips" }, ...f.checks.filter((c) => c.id !== "evidence" || !c.pass || f.evidence).map((c) => el("span", { className: `chip ${c.pass ? "b-green" : "b-red"}`, title: c.message, textContent: `${c.pass ? "✓" : "✗"} ${CHECK[c.id]}` }))));
+      for (const c of f.checks.filter((c) => !c.pass && f.status !== "unknown")) row.append(el("div", { className: "why", textContent: c.message }));
+      if (f.status === "unknown") row.append(el("div", { className: "empty", textContent: f.checks[0].message }));
+      return row;
+    }),
+  );
+}
+
+function renderDecision(rec) {
+  const box = $("#decision");
+  box.replaceChildren(el("div", { className: `banner ${rec.status}`, textContent: BANNER[rec.status] }));
+  if (rec.reasons.length) box.append(el("ul", {}, ...rec.reasons.map((r) => el("li", { textContent: r }))));
+  if (rec.flags.length) {
+    box.append(el("div", { className: "hint", textContent: "FLAGS" }));
+    box.append(el("ul", {}, ...rec.flags.map((f) => el("li", { className: `sev-${f.severity}`, textContent: `${f.code}${f.blockId ? ` (${f.blockId})` : ""}: ${f.message}` }))));
+  }
+  if (rec.status === "quarantined") {
+    box.append(
+      el("div", { className: "hint", textContent: "Reviewer decision required before the database is updated. Rejected fields can never be published." }),
+      el("div", { className: "bar", style: "margin-top:8px" },
+        el("button", { className: "good", textContent: "Approve evidenced fields", onclick: () => review("approve") }),
+        el("button", { className: "bad", textContent: "Reject record", onclick: () => review("reject") })),
+    );
+  }
+  if (rec.review) box.append(el("div", { className: "hint", textContent: `Reviewer: ${rec.review.decision}. Published: ${rec.review.published.join(", ") || "nothing"}` }));
+}
+
+function renderState(state) {
+  $("#db").replaceChildren(
+    ...(state.database.length
+      ? state.database.map((d) => el("div", {}, el("b", { textContent: `${d.recordId} · ${d.publishedBy}` }), el("div", { className: "hint", textContent: Object.entries(d.fields).map(([k, v]) => `${LABEL[k]}: ${v.value}`).join(" · ") })))
+      : [el("div", { className: "empty", textContent: "Nothing published yet." })]),
+  );
+  $("#chain").textContent = state.auditValid.ok ? `chain valid · ${state.audit.length} entries` : `CHAIN BROKEN at #${state.auditValid.brokenAt}`;
+  $("#chain").className = `badge ${state.auditValid.ok ? "b-green" : "b-red"}`;
+  const log = $("#audit");
+  log.replaceChildren(
+    ...state.audit.map((e) => el("div", {}, el("span", { className: "h", textContent: `#${e.seq} ${e.hash.slice(0, 8)} ` }), el("span", { className: "e", textContent: e.event }), ` ${JSON.stringify(e.data).slice(0, 150)}`)),
+  );
+  log.scrollTop = log.scrollHeight;
+}
+
+async function refresh() { renderState(await api("/api/state")); }
+
+async function run(url, step) {
+  if (busy) return;
+  busy = true;
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
+  $(`#st${step ?? 3}`)?.classList.add("active");
+  $("#cols").hidden = true;
+  try {
+    const rec = await api("/api/enrich", { url });
+    current = rec;
+    $("#url").value = url;
+    await renderStages(rec);
+    $("#cols").hidden = false;
+    renderBlocks(rec); renderFields(rec); renderDecision(rec);
+    $("#st3").classList.add("active");
+    await refresh();
+  } catch (e) {
+    $("#stages").replaceChildren(el("div", { className: "stage on fail" }, el("b", { textContent: "Error" }), el("small", { textContent: e.message })));
+  }
+  busy = false;
+}
+
+async function review(decision) {
+  current = await api("/api/review", { id: current.id, decision, note: "Reviewed live during the demo" });
+  renderDecision(current);
+  await refresh();
+}
+
+async function reset() {
+  await api("/api/reset", {});
+  current = null;
+  $("#stages").replaceChildren(); $("#cols").hidden = true;
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
+  await refresh();
+}
+
+async function showPack() {
+  $("#overlay").classList.add("show");
+  $("#pack").textContent = "Running…";
+  const p = await api("/api/testpack");
+  $("#packSummary").textContent = `${p.passed}/${p.total} passed`;
+  $("#packSummary").className = `badge ${p.passed === p.total ? "b-green" : "b-red"}`;
+  $("#pack").replaceChildren(el("table", {},
+    el("thead", {}, el("tr", {}, ...["#", "Focus", "Case", "Expected", "Actual", ""].map((h) => el("th", { textContent: h })))),
+    el("tbody", {}, ...p.results.map((r) => el("tr", {}, el("td", { textContent: r.id }), el("td", { textContent: r.focus }), el("td", { textContent: r.title }), el("td", { textContent: r.expected }), el("td", { textContent: r.actual }), el("td", {}, badge(r.pass ? "PASS" : "FAIL", r.pass ? "b-green" : "b-red")))))));
+}
+
+(async () => {
+  config = await api("/api/config");
+  $("#run1").onclick = () => run(config.scenarios[0].url, 1);
+  $("#run2").onclick = () => run(config.scenarios[1].url, 2);
+  $("#runUrl").onclick = () => run($("#url").value.trim(), null);
+  $("#btnReset").onclick = reset;
+  $("#btnPack").onclick = showPack;
+  $("#closePack").onclick = () => $("#overlay").classList.remove("show");
+  for (const s of config.extra) $("#extra").append(el("option", { value: s.url, textContent: s.label }));
+  $("#extra").onchange = (e) => e.target.value && run(e.target.value, null);
+  $("#url").value = config.scenarios[0].url;
+  addEventListener("keydown", (e) => {
+    if (["INPUT", "SELECT"].includes(document.activeElement.tagName)) return;
+    if (e.key === "1") $("#run1").click(); else if (e.key === "2") $("#run2").click(); else if (e.key.toLowerCase() === "r") reset(); else if (e.key === "Escape") $("#overlay").classList.remove("show");
+  });
+  await refresh();
+})();
+</script>
+</body>
+</html>

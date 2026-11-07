@@ -1,0 +1,18 @@
+{
+  "name": "trusted-enrichment-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Can AI process data without compromising trust? A company-enrichment agent guarded with ScortonJS and Context.dev.",
+  "engines": { "node": ">=20.12" },
+  "scripts": {
+    "setup:scorton": "bash scripts/setup-scorton.sh",
+    "enrich": "node src/cli.js",
+    "challenge": "node challenge/run.js",
+    "challenge:live": "node challenge/run.js --live",
+    "present": "npx --yes serve presentation -l 4173",
+    "pptx": ".venv/bin/python scripts/make_pptx.py",
+    "demo": "node trustlayer/server.js",
+    "demo:test": "node trustlayer/test.js"
+  }
+}
